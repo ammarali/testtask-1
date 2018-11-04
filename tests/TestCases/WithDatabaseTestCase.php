@@ -6,6 +6,7 @@ namespace Tests\App\TestCases;
 use Doctrine\ORM\EntityManagerInterface;
 use Illuminate\Contracts\Console\Kernel;
 
+
 abstract class WithDatabaseTestCase extends TestCase
 {
     /**

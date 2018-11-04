@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\App\TestCases\MailChimp;
 
+use App\Database\Entities\MailChimp\MailChimpMember;
 use App\Database\Entities\MailChimp\MailChimpList;
 use Illuminate\Http\JsonResponse;
 use Mailchimp\Mailchimp;
@@ -10,7 +11,7 @@ use Mockery;
 use Mockery\MockInterface;
 use Tests\App\TestCases\WithDatabaseTestCase;
 
-abstract class ListTestCase extends WithDatabaseTestCase
+abstract class MemberTestCase extends WithDatabaseTestCase
 {
     protected const MAILCHIMP_EXCEPTION_MESSAGE = 'MailChimp exception';
 
@@ -18,7 +19,7 @@ abstract class ListTestCase extends WithDatabaseTestCase
      * @var array
      */
     protected $createdListIds = [];
-
+    
     /**
      * @var array
      */
@@ -47,49 +48,65 @@ abstract class ListTestCase extends WithDatabaseTestCase
         'notify_on_subscribe' => 'emmareli@gmail.com',
         'notify_on_unsubscribe' => 'emmareli@gmail.com'
     ];
+    
+    /**
+     * @var array
+     */
+    protected $createdMemberIds = [];
+    
+    /**
+     * @var array
+     */
+    protected static $MemberData = [
+        'email_address' => 'emmareli@gmail.com',
+        'status' => 'subscribed',
+        'email_type' => 'html',
+        'list_id'    => ''
+    ];
 
     /**
      * @var array
      */
     protected static $notRequired = [
-        'notify_on_subscribe',
-        'notify_on_unsubscribe',
-        'use_archive_bar',
-        'visibility'
+        'email_type'
     ];
 
     /**
-     * Call MailChimp to delete lists created during test.
+     * Call MailChimp to delete Members created during test.
      *
      * @return void
      */
+    
     public function tearDown(): void
     {
-        /** @var Mailchimp $mailChimp */
+        //@var Mailchimp $mailChimp //
         $mailChimp = $this->app->make(Mailchimp::class);
-
         foreach ($this->createdListIds as $listId) {
+            foreach ($this->createdMemberIds as $memberId) {
+                // Delete Member on MailChimp after test
+                $mailChimp->delete(\sprintf('lists/%s/members',$listId), $memberId);
+            }
             // Delete list on MailChimp after test
             $mailChimp->delete(\sprintf('lists/%s', $listId));
         }
 
         parent::tearDown();
     }
-
+    
     /**
-     * Asserts error response when list not found.
+     * Asserts error response when Member not found.
      *
-     * @param string $listId
+     * @param string $memberId
      *
      * @return void
      */
-    protected function assertListNotFoundResponse(string $listId): void
+    protected function assertMemberNotFoundResponse(string $memberId): void
     {
         $content = \json_decode($this->response->content(), true);
 
         $this->assertResponseStatus(404);
         self::assertArrayHasKey('message', $content);
-        self::assertEquals(\sprintf('MailChimpList[%s] not found', $listId), $content['message']);
+        self::assertEquals(\sprintf('MailChimpMember[%s] not found', $memberId), $content['message']);
     }
 
     /**
@@ -108,6 +125,7 @@ abstract class ListTestCase extends WithDatabaseTestCase
         self::assertEquals(self::MAILCHIMP_EXCEPTION_MESSAGE, $content['message']);
     }
 
+    
     /**
      * Create MailChimp list into database.
      *
@@ -118,11 +136,29 @@ abstract class ListTestCase extends WithDatabaseTestCase
     protected function createList(array $data): MailChimpList
     {
         $list = new MailChimpList($data);
-
+        
         $this->entityManager->persist($list);
         $this->entityManager->flush();
-
+        
         return $list;
+    }
+    
+ 
+    /**
+     * Create MailChimp Member into database.
+     *
+     * @param array $memberdata
+     *
+     * @return \App\Database\Entities\MailChimp\MailChimpMember
+     */
+    protected function createMember(array $memberdata): MailChimpMember
+    {
+        $member = new MailChimpMember($memberdata);
+        
+        $this->entityManager->persist($member);
+        $this->entityManager->flush();
+        
+        return $member;
     }
 
     /**

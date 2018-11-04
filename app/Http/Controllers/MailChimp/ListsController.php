@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\MailChimp;
 
 use App\Database\Entities\MailChimp\MailChimpList;
+use App\Database\Entities\MailChimp\MailChimpMember;
 use App\Http\Controllers\Controller;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
@@ -52,7 +53,7 @@ class ListsController extends Controller
                 'errors' => $validator->errors()->toArray()
             ]);
         }
-
+     
         try {
             // Save list into db
             $this->saveEntity($list);
@@ -80,6 +81,10 @@ class ListsController extends Controller
         /** @var \App\Database\Entities\MailChimp\MailChimpList|null $list */
         $list = $this->entityManager->getRepository(MailChimpList::class)->find($listId);
 
+        /** @var \App\Database\Entities\MailChimp\MailChimpMember|null $members */
+        $members = $this->entityManager->getRepository(MailChimpMember::class)->findAll(array('list_id' => $listId));
+        
+        
         if ($list === null) {
             return $this->errorResponse(
                 ['message' => \sprintf('MailChimpList[%s] not found', $listId)],
@@ -90,6 +95,14 @@ class ListsController extends Controller
         try {
             // Remove list from database
             $this->removeEntity($list);
+            
+            //Remove Members of list from database
+            if($members !== NULL) {
+                foreach($members as $member) {
+                    $this->removeEntity($member);
+                }
+            }
+            
             // Remove list from MailChimp
             $this->mailChimp->delete(\sprintf('lists/%s', $list->getMailChimpId()));
         } catch (Exception $exception) {

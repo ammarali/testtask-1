@@ -14,6 +14,7 @@ class ListsControllerTest extends ListTestCase
      */
     public function testCreateListSuccessfully(): void
     {
+        
         $this->post('/mailchimp/lists', static::$listData);
 
         $content = \json_decode($this->response->getContent(), true);

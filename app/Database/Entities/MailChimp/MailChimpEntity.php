@@ -34,7 +34,7 @@ abstract class MailChimpEntity extends Entity
             if ($value === null) {
                 continue;
             }
-
+            
             $array[$property] = $value;
         }
 

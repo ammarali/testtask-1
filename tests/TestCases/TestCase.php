@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Laravel\Lumen\Application;
 use Laravel\Lumen\Testing\TestCase as LumenTestCase;
 
+
 abstract class TestCase extends LumenTestCase
 {
     /**

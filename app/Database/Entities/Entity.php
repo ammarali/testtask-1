@@ -5,6 +5,7 @@ namespace App\Database\Entities;
 
 use EoneoPay\Utils\Str;
 
+
 abstract class Entity
 {
     /**
